@@ -1,0 +1,54 @@
+// BIBLIOTECAS
+
+#include <OneWire.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <DallasTemperature.h>
+
+// CONFIGURAÇÃO/INICIALIZAÇÃO DE COMPONENTES
+
+#define STemperatura 2
+OneWire oneWire(STemperatura);
+DallasTemperature sensors(&oneWire);
+
+LiquidCrystal_I2C lcd(0x27, 20, 4);
+
+/* VARIÁVEIS */
+unsigned long horaAtual;
+unsigned long horaAnterior = 0;
+
+void setup() {
+  Serial.begin(9600);
+  sensors.begin();
+  lcd.begin(20, 4);
+  lcd.backlight();
+}
+
+void displaytemperatura(int indicesensor) {
+  lcd.clear();
+  float temp_C = sensors.getTempCByIndex(indicesensor);
+  Serial.print(temp_C, 1);
+  Serial.println(" ºC");
+  lcd.setCursor(0, 0);
+  lcd.print(temp_C, 1);
+  lcd.print("C");
+  lcd.setCursor(0, 1);
+
+  float temp_F = DallasTemperature::toFahrenheit(temp_C);
+  Serial.print(temp_F, 1);
+  Serial.println(" ºF");
+  lcd.print(temp_F, 1);
+  lcd.print("F");
+}
+
+void loop() {
+  /* VARIÁVEIS */
+  horaAtual = millis();
+
+  sensors.requestTemperatures();
+
+  if (horaAtual - horaAnterior >= 3000) {
+    displaytemperatura(0);
+    horaAnterior = horaAtual;
+  }
+}
