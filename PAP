@@ -8,6 +8,11 @@
 // CONFIGURAÇÃO/INICIALIZAÇÃO DE COMPONENTES
 
 #define STemperatura 2
+const int V1 = 8;
+const int Temp1MIN = 40;
+const int Temp1MAX = 50;
+
+
 OneWire oneWire(STemperatura);
 DallasTemperature sensors(&oneWire);
 
@@ -17,38 +22,60 @@ LiquidCrystal_I2C lcd(0x27, 20, 4);
 unsigned long horaAtual;
 unsigned long horaAnterior = 0;
 
-void setup() {
+// SETUP
+
+void setup()
+{
+  pinMode(V1, OUTPUT);
   Serial.begin(9600);
   sensors.begin();
-  lcd.begin(20, 4);
+  lcd.init();
   lcd.backlight();
 }
 
-void displaytemperatura(int indicesensor) {
+void displayTemperatura(int indicesensor)
+{
+  
   lcd.clear();
+  sensors.requestTemperatures();
   float temp_C = sensors.getTempCByIndex(indicesensor);
-  Serial.print(temp_C, 1);
+  Serial.print(temp_C, 2);    // Temperatura com x casas decimais
   Serial.println(" ºC");
   lcd.setCursor(0, 0);
-  lcd.print(temp_C, 1);
+  lcd.print("ST1: ");
+  lcd.print(temp_C, 2);     // Temperatura com x casas decimais
   lcd.print("C");
-  lcd.setCursor(0, 1);
-
+  
+  lcd.setCursor(5, 1);
   float temp_F = DallasTemperature::toFahrenheit(temp_C);
   Serial.print(temp_F, 1);
   Serial.println(" ºF");
-  lcd.print(temp_F, 1);
+  lcd.print(temp_F);
   lcd.print("F");
+  
 }
 
-void loop() {
-  /* VARIÁVEIS */
-  horaAtual = millis();
+void controlV1(int indicesensor)
+{
+  float temp_C = sensors.getTempCByIndex(indicesensor);
+  if (temp_C >= Temp1MAX)
+  {
+    digitalWrite(V1, HIGH);
+  }
+  else if (temp_C <= Temp1MIN)
+  {
+    digitalWrite(V1, LOW);
+  }
+}
 
-  sensors.requestTemperatures();
+void loop()
+{
+  horaAtual = millis();
+  //sensors.requestTemperatures();
 
   if (horaAtual - horaAnterior >= 3000) {
-    displaytemperatura(0);
+    displayTemperatura(0);
+    controlV1(0);
     horaAnterior = horaAtual;
   }
 }
