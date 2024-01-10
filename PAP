@@ -52,6 +52,8 @@ void displayTemperatura(int indicesensor)
   Serial.println(" ºF");
   lcd.print(temp_F);
   lcd.print("F");
+
+  lcd.printl("-------------")
   
 }
 
