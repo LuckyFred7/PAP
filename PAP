@@ -11,13 +11,12 @@
 
 #define STemperatura1 2  // Pino do primeiro sensor
 #define STemperatura2 3  // Pino do segundo sensor
-#define V1 8         // Pino da valvula de controlo/V1
-#define V2 9       // Pino da valvula de passagem de saída de água do painel/V2
-#define V3 10      // Pino da valvula de passagem de saída de água do esquentador/V3
-#define painel 11   // Pino responsável pelo controle da resistência de aquecimento de água
-#define BotaoAumentar 5  // Pino do botao que aumenta o valor
-#define BotaoDiminuir 6  // Pino do botao que diminui o valor
-#define BotaoMudarTela 7  // Pino do botao que muda de tela
+#define V1 8         // Pino da válvula de controlo/V1
+#define V2 9       // Pino da válvula de passagem de saída de água do painél/V2
+#define V3 10      // Pino da válvula de passagem de saída de água do esquentador/V3
+#define BotaoAumentar 5  // Pino do botão que aumenta o valor
+#define BotaoDiminuir 6  // Pino do botão que diminui o valor
+#define BotaoMudarTela 7  // Pino do botão que muda de tela
 
 /* VARIÁVEIS */
 
@@ -42,7 +41,7 @@ int EstadoV3 = 0;   // Variável que indica o estado da V3, 1 = ligado/aberto, 0
 unsigned long horaAtual;      // regista quantos milisegundos passaram desde que se inicializou o Arduino
 unsigned long horaAnterior = 0;   // cria a variável que permitirá criar intervalos
 unsigned long lastButtonPress = 0;  // Variável para verificar à quanto tempo algum botão foi pressionado pela última vez
-unsigned long debounceDelay = 500;  // Dellay para verificar se os botões foram pressionados
+const unsigned long debounceDelay = 500;  // Dellay para verificar se os botões foram pressionados
 
 int screen = 0;  // Variável usada para controlar o ecrã do menu
 
@@ -62,18 +61,12 @@ void setup()
   pinMode(V1, OUTPUT);    // define que o pino que liga a V1 é OUTPUT
   pinMode(V2, OUTPUT);    // define que o pino que liga a V2 é OUTPUT
   pinMode(V3, OUTPUT);    // define que o pino que liga a V3 é OUTPUT
-  pinMode(painel, OUTPUT);    // define que o pino que liga a resistência de aquecimento é OUTPUT
-  pinMode(BotaoAumentar, INPUT);  // define que o pino do botão de aumentar é INPUT
-  pinMode(BotaoDiminuir, INPUT);  // define que o pino do botão de diminuir é INPUT
-  pinMode(BotaoMudarTela, INPUT);  // define que o pino do botão de mudar tela é INPUT
-
   Serial.begin(9600);   // inicialização do Serial Monitor
   sensors1.begin();     // inicialização do sensor 1
-  sensors2.begin();     // inicialização do sensor 2
+  sensors2.begin();     // inicialização do sensor 1
   lcd.init();             // inicialização do LCD
   lcd.backlight();      // inicialização do LCD
 }
-
 
 void displayTemperatura(int indicesensor)   // escrever Temperatura no Monitor Serial e LCD
 {
@@ -96,22 +89,22 @@ void displayTemperatura(int indicesensor)   // escrever Temperatura no Monitor S
   Serial.print(temp_C2, 2);     // escreve no Monitor Serial a temperatura em Celsius registada pelo sensor 2 e escreve com duas casas decimais
   Serial.println(" ºC");      // escreve no Monitor Serial
   
-  lcd.setCursor(0, 1);    // coloca o cursor para escrever no LCD nas coordenadas 0, 1; primeira coluna da segunda linha
+  lcd.setCursor(0, 2);    // coloca o cursor para escrever no LCD nas coordenadas 0, 1; primeira coluna da segunda linha
   lcd.print("ST2: ");     // escreve no LCD
   lcd.print(temp_C2, 2);    // escreve no LCD a temperatura registada em Celsius pelo sensor 2 e escreve com duas casas decimais
   lcd.print("C");     // escreve no LCD
   
-  lcd.setCursor(0, 2);      // coloca o cursor para escrever no LCD nas coordenadas 0, 2; primeira coluna da terceira linha
-  Serial.print(temp_F1, 1);   // escreve no Monitor Serial a temperatura em Fahrenheit registada pelo sensor 1 e escreve com duas casas decimais
-  Serial.println(" ºF");      // escreve no Monitor Serial
+  lcd.setCursor(0, 1);      // coloca o cursor para escrever no LCD nas coordenadas 0, 2; primeira coluna da terceira linha
   lcd.print(temp_F1, 2);      // escreve no LCD a temperatura registada em Fahrenheit pelo sensor 1 e escreve com duas casas decimais
   lcd.print("F");           // escreve no LCD
+  Serial.print(temp_F1, 1);   // escreve no Monitor Serial a temperatura em Fahrenheit registada pelo sensor 1 e escreve com duas casas decimais
+  Serial.println(" ºF");      // escreve no Monitor Serial
 
   lcd.setCursor(0, 3);    // coloca o cursor para escrever no LCD nas coordenadas 0, 3; primeira coluna da quarta linha
-  Serial.print(temp_F2, 1);   // escreve no Monitor Serial a temperatura em Fahrenheit registada pelo sensor 2 e escreve com duas casas decimais
-  Serial.println(" ºF");      // escreve no Monitor Serial
   lcd.print(temp_F2, 2);      // escreve no LCD a temperatura registada em Fahrenheit pelo sensor 2 e escreve com duas casas decimais
   lcd.print("F");       // escreve no LCD
+  Serial.print(temp_F2, 1);   // escreve no Monitor Serial a temperatura em Fahrenheit registada pelo sensor 2 e escreve com duas casas decimais
+  Serial.println(" ºF");      // escreve no Monitor Serial
 }
 
 void controlV1(int indicesensor)    // função para controlar a Válvula de control de temperatura
@@ -121,10 +114,12 @@ void controlV1(int indicesensor)    // função para controlar a Válvula de con
   if (temp_C1 >= Temp1MAX)    // se a temperatura lida pelo sensor1 for maior ou igual ao valor de Temp1MAX definido pelo utilizador
   {
     digitalWrite(V1, HIGH);   // abre a V1
+    EstadoV1 = 1;
   }
   else if (temp_C1 <= Temp1MIN)   // se a temperatura lida pelo sensor1 for menor ou igual ao valor de Temp1MIN definido pelo utilizador
   {
     digitalWrite(V1, LOW);    // fecha a V1
+    EstadoV1 = 0;
   }
 }
 
@@ -135,12 +130,16 @@ void controlV2(int indicesensor)      // função para controlar as Válvulas de
   if (temp_C1 >= TempV2MIN && temp_C1 <= TempV2MAX)    // se a temperatura lida pelo sensor1 for maior ou igual ao valor de TempV2MIN definida pelo utilizador e se também for menor ou igual ao valor de TempV2MAX
     {
       digitalWrite(V2, HIGH);       // abre a V2, água do Painél
+      EstadoV2 = 1;
       digitalWrite(V3, LOW);        // fecha a V3, água do Esquentador
+      EstadoV3 = 0;
     }
-   else if (temp_C1 <= TempV2MIN || temp_C1 >= TempV2MAX)   // se a temperatura lida pelo sensor1 for menor ou igual à TempV2MIN definida pelo utilizador, ou se a temperatura lida pelo sensor1 for maior ou igual a TempV2MAX
+   else if (temp_C1 <= TempV2MIN && temp_C1 >= TempV2MAX)   // se a temperatura lida pelo sensor1 for menor ou igual à TempV2MIN definida pelo utilizador, ou se a temperatura lida pelo sensor1 for maior ou igual a TempV2MAX
     {
       digitalWrite(V2, LOW);      // fecha a V2, água do Painél
+      EstadoV2 = 0;
       digitalWrite(V3, HIGH);      // abre a V3, água do Esquentador
+      EstadoV3 = 1;
     }
 }
 
@@ -183,7 +182,7 @@ int verificarV3(int EstadoV3)   // função para verirficar o estado da V3
   return EstadoV3;    // a função passa a ter o valor de Estado da V3, pode ser 1 (ligado) ou 0 (desligado)
 }
 
-void menu( int EstadoV1, int EstadoV2, int EstadoV3 )     // função para criar um menu
+void menu( int verificarV1, int verificarV2, int verificarV3 )     // função para criar um menu
 {
   if (screen == 0)    // ecrã para mostrar a temperatura dos sensores
     {
@@ -192,10 +191,10 @@ void menu( int EstadoV1, int EstadoV2, int EstadoV3 )     // função para criar
   
       // Verifica se o botão foi pressionado para mudar de ecrã
       if (digitalRead(BotaoMudarTela) == HIGH && horaAtual - lastButtonPress >= debounceDelay)
-      {
-        screen = screen + 1;  // Passa para o próximo ecrã do menu
-        lastButtonPress = millis();   // Quando mudar de tela define a variável lastButtonPress como o tempo em que isso aconteceu
-      }
+        {
+          screen = screen + 1;  // Passa para o próximo ecrã do menu
+          lastButtonPress = millis();   // Quando mudar de tela define a variável lastButtonPress como o tempo em que isso aconteceu
+        }
     }
   else if (screen == 1)   // ecrã para mostrar o estado das válvulas
     {
@@ -203,21 +202,43 @@ void menu( int EstadoV1, int EstadoV2, int EstadoV3 )     // função para criar
       lcd.clear();                    // limpa o LCD
       lcd.setCursor(0, 0);          // coloca o cursor para escrever no LCD nas coordenadas 0, 0; canto superior esquerdo do LCD
       lcd.print("V1: ");          // escreve no LCD
-      if ( EstadoV1 == 1 )    // Se V1 == HIGH, escreve Aberta; 
+      if ( verificarV1 == 1 )    // Se V1 == HIGH, escreve Aberta; 
         {
           lcd.print("Aberta");      // escreve no LCD
         }
-       else if ( EstadoV1 == 1 )    // Se V1 == LOW, escreve Fechada
+       else if ( verificarV1 == 0 )    // Se V1 == LOW, escreve Fechada
+        {
+          lcd.print("Fechada");     // escreve no LCD
+        }
+
+      lcd.setCursor(0, 1);
+      lcd.print("V2: ");          // escreve no LCD
+      if ( verificarV2 == 1 )    // Se V2 == HIGH, escreve Aberta; 
+        {
+          lcd.print("Aberta");      // escreve no LCD
+        }
+       else if ( verificarV2 == 0 )    // Se V2 == LOW, escreve Fechada
+        {
+          lcd.print("Fechada");     // escreve no LCD
+        }
+
+      lcd.setCursor(0, 2);
+      lcd.print("V3: ");          // escreve no LCD
+      if ( verificarV3 == 1 )    // Se V3 == HIGH, escreve Aberta; 
+        {
+          lcd.print("Aberta");      // escreve no LCD
+        }
+       else if ( verificarV3 == 0 )    // Se V3 == LOW, escreve Fechada
         {
           lcd.print("Fechada");     // escreve no LCD
         }
         
       // Verifica se o botão foi pressionado para mudar de tela
       if (digitalRead(BotaoMudarTela) == HIGH && horaAtual - lastButtonPress >= debounceDelay)
-      {
-        screen = screen + 1;  // Passa para o próximo ecrã
-        lastButtonPress = millis();   // atualzia o tempo em que o último botão de mudar de tela foi pressionado
-      }
+        {
+          screen = screen + 1;  // Passa para o próximo ecrã
+          lastButtonPress = millis();   // atualzia o tempo em que o último botão de mudar de tela foi pressionado
+        }
     }
   else if (screen == 2)     // ecrã para o utilizador definir a temperatura máxima em que a V1 abre
     {
@@ -230,10 +251,10 @@ void menu( int EstadoV1, int EstadoV2, int EstadoV3 )     // função para criar
   
       // Verifica se o botão de mudar de tela foi pressionado
       if (digitalRead(BotaoMudarTela) == HIGH && horaAtual - lastButtonPress >= debounceDelay)
-      {
-        screen = 3;  // Passa para o próximo ecrã
-        lastButtonPress = millis();   // atualiza o tempo em que o último botão de mudar de tela foi pressionado
-      }
+        {
+          screen = 3;  // Passa para o próximo ecrã
+          lastButtonPress = millis();   // atualiza o tempo em que o último botão de mudar de tela foi pressionado
+        }
     }
   else if (screen == 3)     // ecrã para o utilizador definir a temperatura mínima em que a V1 fecha
     {
@@ -245,11 +266,11 @@ void menu( int EstadoV1, int EstadoV2, int EstadoV3 )     // função para criar
       lcd.print(Temp1MIN);      // escreve o valor da variável Temp1MIN no LCD
   
       // Verifica se o botão de mudar de tela foi pressionado
-      if (digitalRead(BotaoMudarTela) == HIGH && millis() - lastButtonPress >= debounceDelay)
-      {
-        screen = screen + 1;  // Passa para o próximo ecrã
-        lastButtonPress = millis();   // atualiza o tempo em que o último botão de mudar de tela foi pressionado
-      }
+      if (digitalRead(BotaoMudarTela) == HIGH && horaAtual - lastButtonPress >= debounceDelay)
+        {
+          screen = screen + 1;  // Passa para o próximo ecrã
+          lastButtonPress = millis();   // atualiza o tempo em que o último botão de mudar de tela foi pressionado
+        }
     }
   else if (screen == 4)     // ecrã para o utilizador definir a temperatura Máxima de uso da água, vinda do painel, V2 fecha
     {
@@ -261,13 +282,13 @@ void menu( int EstadoV1, int EstadoV2, int EstadoV3 )     // função para criar
       lcd.print(TempV2MAX);     // escreve o valor da variável TempV2MAX no LCD
 
       // Verifica se o botão de mudar de tela foi pressionado
-      if (digitalRead(BotaoMudarTela) == HIGH && millis() - lastButtonPress >= debounceDelay)
-      {
-        screen = screen + 1;  // Passa para o próximo ecrã
-        lastButtonPress = millis();   // atualiza o tempo em que o último botão de mudar de tela foi pressionado
-      }
+      if (digitalRead(BotaoMudarTela) == HIGH && horaAtual - lastButtonPress >= debounceDelay)
+        {
+          screen = screen + 1;  // Passa para o próximo ecrã
+          lastButtonPress = millis();   // atualiza o tempo em que o último botão de mudar de tela foi pressionado
+        }
     }
-      else if (screen == 5)     // ecrã para o utilizador definir a temperatura Mínima de uso da água, vinda do painel, V2 fecha
+  else if (screen == 5)     // ecrã para o utilizador definir a temperatura Mínima de uso da água, vinda do painel, V2 fecha
     {
       // Sexto ecrã: Display TempV2MIN
       lcd.clear();          // limpa o LCD
@@ -277,11 +298,11 @@ void menu( int EstadoV1, int EstadoV2, int EstadoV3 )     // função para criar
       lcd.print(TempV2MIN);     // escreve o valor da variável TempV2MIN no LCD
 
       // Verifica se o botão de mudar de tela foi pressionado
-      if (digitalRead(BotaoMudarTela) == HIGH && millis() - lastButtonPress >= debounceDelay)
-      {
-        screen = 0;  // Volta para o primeiro ecrã
-        lastButtonPress = millis();   // atualiza o tempo em que o último botão de mudar de tela foi pressionado
-      }
+      if (digitalRead(BotaoMudarTela) == HIGH && horaAtual - lastButtonPress >= debounceDelay)
+        {
+          screen = 0;  // Volta para o primeiro ecrã
+          lastButtonPress = millis();   // atualiza o tempo em que o último botão de mudar de tela foi pressionado
+        }
     }
 
   // Verifica se o botão de Aumentar o Valor foi pressionado
@@ -289,27 +310,27 @@ void menu( int EstadoV1, int EstadoV2, int EstadoV3 )     // função para criar
     {
       if (screen == 2)    // se estiver no terceiro ecrã, Display Temp1MAX
         {
-        // Aumenta o valor de Temp1MAX
-        Temp1MAX++;
-        verificarTemps(Temp1MAX, Temp1MIN);     // Verifica se todas as Temperaturas estão corretas
+          // Aumenta o valor de Temp1MAX
+          Temp1MAX++;
+          verificarTemps(Temp1MAX, Temp1MIN, TempV2MAX, TempV2MIN);     // Verifica se todas as Temperaturas estão corretas
         }
-      else if (screen == 3)
+      else if (screen == 3)   // se estiver no quarto ecrã, Display Temp1MIN
         {
           // Aumenta o valor de Temp1MIN
           Temp1MIN++;
-          verificarTemps(Temp1MAX, Temp1MIN);
+          verificarTemps(Temp1MAX, Temp1MIN, TempV2MAX, TempV2MIN);   // Verifica se todas as Temperaturas estão corretas
         }
-      else if (screen == 4)
+      else if (screen == 4)   // se estiver no quinto ecrã, Display TempV2MAX
         {
           // Aumenta o valor de TempV2MAX
           TempV2MAX++;
-          verificarTemps(Temp1MAX, Temp1MIN);
+          verificarTemps(Temp1MAX, Temp1MIN, TempV2MAX, TempV2MIN);   // Verifica se todas as Temperaturas estão corretas
         }
-      else if (screen == 5)
+      else if (screen == 5)   // se estiver no sexto ecrã, Display TempV2MIN
         {
           // Aumenta o valor de TempV2MIN
           TempV2MIN++;
-          verificarTemps(Temp1MAX, Temp1MIN);
+          verificarTemps(Temp1MAX, Temp1MIN, TempV2MAX, TempV2MIN);   // Verifica se todas as Temperaturas estão corretas
         }
       lastButtonPress = millis();   // atualiza o tempo em que o último botão de mudar de tela foi pressionado
   
@@ -322,33 +343,40 @@ void menu( int EstadoV1, int EstadoV2, int EstadoV3 )     // função para criar
 
   // Verifica se o botão de diminuir valor foi pressionado
   if (digitalRead(BotaoDiminuir) == HIGH && horaAtual - lastButtonPress >= debounceDelay)
-  {
-    if (screen == 2)
     {
-      // Diminui o valor de Temp1MAX 
-      Temp1MAX--;
-      verificarTemps(Temp1MAX, Temp1MIN);
+      if (screen == 2)    // se estiver no terceiro ecrã, Display Temp1MAX
+        {
+          // Diminui o valor de Temp1MAX 
+          Temp1MAX--;
+          verificarTemps(Temp1MAX, Temp1MIN, TempV2MAX, TempV2MIN);
+        }
+      else if (screen == 3)     // se estiver no quarto ecrã, Display Temp1MIN
+        {
+          // Diminui o valor de Temp1MIN 
+          Temp1MIN--;
+          verificarTemps(Temp1MAX, Temp1MIN, TempV2MAX, TempV2MIN);
+        }
+      else if(screen == 4)      // se estiver no quinto ecrã, Display TempV2MAX
+        {
+          // Diminui o valor de TempV2MAX
+          TempV2MAX--;
+          verificarTemps(Temp1MAX, Temp1MIN, TempV2MAX, TempV2MIN);
+        }
+      else if(screen == 5)      // se estiver no sexto ecrã, Display TempV2MIN
+        {
+          TempV2MIN--;
+          verificarTemps(Temp1MAX, Temp1MIN, TempV2MAX, TempV2MIN);
+        }
+      lastButtonPress = millis();   // atualiza o tempo em que o último botão foi pressionado
     }
-    else if (screen == 3)
-    {
-      // Diminui o valor de Temp1MIN 
-      Temp1MIN--;
-      verificarTemps(Temp1MAX, Temp1MIN);
-    }
-    else if (screen == 4)
-      {
-        // Aumentar o valor de TempV2MAX
-      }
-    lastButtonPress = millis();   // atualiza o tempo em que o último botão foi pressionado
-  }
     if(Temp1MAX - Temp1MIN >= 1)
-    {
-      Temp1MAX = Temp1MAXstandard;
-      Temp1MIN = Temp1MINstandard;
-    }
+      {
+        Temp1MAX = Temp1MAXstandard;
+        Temp1MIN = Temp1MINstandard;
+      }
 }
 
-void verificarTemps(int Temp1MAX, int Temp1MIN)   // verifica se a temperatura máxima e a temperatura mínima definidas pelo utilizadores são seguras
+void verificarTemps(int Temp1MAX, int Temp1MIN, int TempV2MAX, int TempV2MIN)   // verifica se a temperatura máxima e a temperatura mínima definidas pelo utilizadores são seguras
 {
   if(Temp1MAX > Temp1MAXMAX)
     {
@@ -394,8 +422,10 @@ void verificarTemps(int Temp1MAX, int Temp1MIN)   // verifica se a temperatura m
      {
        lcd.clear();
        lcd.setCursor(0, 0);
-       lcd.print("Temperatura muito alta!!!");
+       lcd.print("Temperatura muito");
        lcd.setCursor(0, 1);
+       lcd.print("alta!!!");
+       lcd.setCursor(0, 2);
        lcd.print("TempV2MAX = ");
        lcd.print(TempV2MAXMAX);
        TempV2MAX = TempV2MAXMAX;
@@ -414,15 +444,7 @@ void verificarTemps(int Temp1MAX, int Temp1MIN)   // verifica se a temperatura m
 
 void output(int indicesensor)
 {
-  float temp_C1 = sensors1.getTempCByIndex(indicesensor);   // cria a variável temp_C1 que é o valor da temperatura em graus Celsius do sensor 1
-  if(temp_C1 >= Temp1MAXMAX)
-    {
-      digitalWrite(painel, LOW);
-    }
-  else if(temp_C1 <= Temp1MINMIN)
-    {
-      digitalWrite(painel, HIGH);
-    }
+  
 }
 
 void loop()
